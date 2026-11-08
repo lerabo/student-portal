@@ -67,7 +67,7 @@ def run(group: Group) -> None:
                     if debtors:
                         print_students(debtors)
                     else:
-                        print("Боржників немає")
+                        print("Боржників немає: усі оцінки не нижче E")
                 case "0":
                     return
                 case _:
