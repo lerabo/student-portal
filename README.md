@@ -13,7 +13,7 @@
 - Django, Django REST Framework
 - FastAPI
 - Vue.js
-- PostgreSQL, Docker
+- PostgreSQL, Docker, Docker Compose
 
 ## Запуск
 
