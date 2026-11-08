@@ -1,2 +1,5 @@
-def main() -> None:
-    print("Hello from student-portal!")
+"""Система управління студентами."""
+
+from student_portal.cli import main
+
+__all__ = ["main"]
