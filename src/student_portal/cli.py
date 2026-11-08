@@ -15,7 +15,8 @@ MENU = """
 1 - список студентів        5 - додати оцінку
 2 - рейтинг                 6 - видалити студента
 3 - пошук за прізвищем      7 - розподіл оцінок ECTS
-4 - додати студента         0 - зберегти і вийти"""
+4 - додати студента         8 - список боржників
+                            0 - зберегти і вийти"""
 
 
 def format_average(value: float | None) -> str:
@@ -61,6 +62,12 @@ def run(group: Group) -> None:
                 case "7":
                     for letter, count in group.ects_distribution().items():
                         print(f"{letter:<2} {'█' * count} {count}")
+                case "8":
+                    debtors = group.debtors()
+                    if debtors:
+                        print_students(debtors)
+                    else:
+                        print("Боржників немає")
                 case "0":
                     return
                 case _:

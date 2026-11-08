@@ -47,6 +47,9 @@ class Student(Person):
     def average(self) -> float | None:
         return fmean(g.score for g in self.grades) if self.grades else None
 
+    def is_debtor(self) -> bool:
+        """Чи має студент хоча б одну оцінку Fx (варіант 2)."""
+        return any(g.ects == "Fx" for g in self.grades)
 
 
 @dataclass

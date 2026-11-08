@@ -66,3 +66,7 @@ class Group:
     def ects_distribution(self) -> dict[str, int]:
         counts = Counter(g.ects for s in self for g in s.grades)
         return {letter: counts[letter] for letter in ECTS_LETTERS if counts[letter]}
+
+    def debtors(self) -> list[Student]:
+        """Студенти з хоча б однією оцінкою Fx (варіант 2)."""
+        return [s for s in self if s.is_debtor()]
