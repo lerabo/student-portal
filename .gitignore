@@ -218,3 +218,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Проєкт student-portal
+media/
+.idea/
+.vscode/
+.DS_Store
