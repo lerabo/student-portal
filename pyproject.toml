@@ -1,0 +1,29 @@
+[project]
+name = "student-portal"
+version = "0.1.0"
+description = "Система управління студентами"
+readme = "README.md"
+authors = [
+    { name = "Бондарчук Валерія", email = "62139768+lerabo@users.noreply.github.com" }
+]
+requires-python = ">=3.14"
+dependencies = []
+
+[project.scripts]
+student-portal = "student_portal:main"
+
+[build-system]
+requires = ["uv_build>=0.11.32,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.16.9",
+]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, isort, pep8-naming, pyupgrade, bugbear, simplify
+select = ["E", "W", "F", "I", "N", "UP", "B", "SIM"]
