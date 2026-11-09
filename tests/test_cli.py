@@ -101,7 +101,7 @@ def test_timed_logs_even_when_function_fails(caplog):
         pytest.param(("7",), "A  █ 1", id="7-ects"),
         pytest.param(("8",), "Боржників немає", id="8-no-debtors"),
         pytest.param(("10",), "Надіслано: Коваль Олена: середній бал 91.5", id="10"),
-        pytest.param(("11",), "Надіслано: Бойко Ірина: оцінок немає", id="11"),
+        pytest.param(("12",), "Надіслано: Бойко Ірина: оцінок немає", id="12"),
     ],
 )
 def test_menu_command_output(monkeypatch, group, answers, capsys, replies, expected):

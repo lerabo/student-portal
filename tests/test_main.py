@@ -68,7 +68,7 @@ def test_download_group_from_dekanat(
     fetch = mocker.patch(
         "student_portal.cli.fetch_group", autospec=True, return_value=server_group
     )
-    answers("12", reply, "0")
+    answers("11", reply, "0")
 
     main()
 
@@ -82,7 +82,7 @@ def test_download_group_uses_default_url(mocker, monkeypatch, group, answers):
     fetch = mocker.patch(
         "student_portal.cli.fetch_group", autospec=True, return_value=group
     )
-    answers("12", "н", "0")
+    answers("11", "н", "0")
 
     cli.run(group)
 
