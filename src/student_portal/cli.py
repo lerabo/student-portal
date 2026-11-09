@@ -122,14 +122,7 @@ def send_results(group: Group) -> None:
         print(f"Надіслано: {message}")
 
 
-@command("11", "розіслати результати пакетами")
-@timed
-def send_results_in_batches(group: Group) -> None:
-    for message in asyncio.run(notify_in_batches(group)):
-        print(f"Надіслано: {message}")
-
-
-@command("12", "завантажити групу з сервера деканату")
+@command("11", "завантажити групу з сервера деканату")
 def download_group(group: Group) -> None:
     url = os.environ.get("DEKANAT_URL", DEFAULT_DEKANAT_URL)
     remote = fetch_group(url)
@@ -137,6 +130,13 @@ def download_group(group: Group) -> None:
     if input("Замінити поточну групу? (т/н) ").strip().lower() == "т":
         group.name, group.students = remote.name, remote.students
         print("Групу замінено")
+
+
+@command("12", "розіслати результати пакетами")
+@timed
+def send_results_in_batches(group: Group) -> None:
+    for message in asyncio.run(notify_in_batches(group)):
+        print(f"Надіслано: {message}")
 
 
 def run(group: Group) -> None:
