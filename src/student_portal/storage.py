@@ -5,6 +5,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+from student_portal.decorators import timed
 from student_portal.exceptions import StorageError
 from student_portal.grades import Grade
 from student_portal.group import Group
@@ -44,6 +45,7 @@ def group_from_dict(data: dict[str, Any]) -> Group:
     return group
 
 
+@timed
 def save_group(group: Group, path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as file:

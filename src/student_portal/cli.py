@@ -1,5 +1,7 @@
 """Консольний інтерфейс."""
 
+import logging
+import os
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -79,6 +81,10 @@ def run(group: Group) -> None:
 
 
 def main() -> None:
+    logging.basicConfig(
+        level=os.environ.get("LOG_LEVEL", "WARNING").upper(),
+        format="%(levelname)s %(name)s: %(message)s",
+    )
     if DATA_FILE.exists():
         try:
             group = load_group(DATA_FILE)
