@@ -49,9 +49,22 @@ student_id;course;score;graded_on
 з файлу не буде додано, а меню покаже номер рядка з помилкою. Приклади:
 `data/journal.csv` і `data/journal-broken.csv`.
 
+## Тести
+
+Модульні тести pytest лежать у теці `tests/`, спільні фікстури - у `tests/conftest.py`.
+
+~~~bash
+uv run pytest                 # усі тести, короткий звіт
+uv run pytest -v              # кожен тест окремим рядком
+uv run pytest -k journal      # лише тести, у назві яких є «journal»
+~~~
+
+Тести працюють із файлами лише у тимчасовій теці (`tmp_path`) і не змінюють `data/`.
+
 ## Перевірки
 
 ~~~bash
+uv run pytest
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy src
