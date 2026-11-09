@@ -153,3 +153,38 @@ def test_transaction_restores_group_after_error(group):
         group.get(1).add_grade(Grade("Python", 105))
 
     assert [(s.id, s.average()) for s in group] == before
+
+
+@pytest.mark.parametrize(
+    ("score", "is_debtor"),
+    [
+        pytest.param(59, True, id="59-fx"),
+        pytest.param(60, False, id="60-e"),
+        pytest.param(0, True, id="zero"),
+    ],
+)
+def test_debtor_boundary(make_student, score, is_debtor):
+    student = make_student("Коваль", 90, score)
+
+    assert student.is_debtor() is is_debtor
+
+
+def test_student_without_grades_is_not_debtor(make_student):
+    assert make_student("Бойко").is_debtor() is False
+
+
+def test_debtors_lists_each_student_once_in_group_order(make_student):
+    group = Group("КН-11")
+    for student in (
+        make_student("Коваль", 95),
+        make_student("Мельник", 30, 45, 50),
+        make_student("Бойко"),
+        make_student("Шевчук", 59, 90),
+    ):
+        group.add(student)
+
+    assert [s.last_name for s in group.debtors()] == ["Мельник", "Шевчук"]
+
+
+def test_group_without_debtors(group):
+    assert group.debtors() == []
