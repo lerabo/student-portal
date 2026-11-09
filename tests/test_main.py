@@ -75,3 +75,15 @@ def test_download_group_from_dekanat(
     fetch.assert_called_once_with(URL)
     saved = json.loads(data_file.read_text(encoding="utf-8"))
     assert saved["name"] == expected_name
+
+
+def test_download_group_uses_default_url(mocker, monkeypatch, group, answers):
+    monkeypatch.delenv("DEKANAT_URL", raising=False)
+    fetch = mocker.patch(
+        "student_portal.cli.fetch_group", autospec=True, return_value=group
+    )
+    answers("12", "н", "0")
+
+    cli.run(group)
+
+    fetch.assert_called_once_with(cli.DEFAULT_DEKANAT_URL)
