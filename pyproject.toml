@@ -41,3 +41,11 @@ testpaths = ["tests"]
 addopts = ["-ra"]
 strict = true
 
+[tool.coverage.run]
+branch = true
+source = ["student_portal"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90
