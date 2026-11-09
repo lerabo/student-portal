@@ -11,7 +11,7 @@ from student_portal.exceptions import PortalError, StorageError
 from student_portal.grades import Grade
 from student_portal.group import Group
 from student_portal.journal import import_journal
-from student_portal.notify import notify_all
+from student_portal.notify import notify_all, notify_in_batches
 from student_portal.people import Student
 from student_portal.storage import load_group, save_group
 
@@ -117,6 +117,13 @@ def import_grades(group: Group) -> None:
 @timed
 def send_results(group: Group) -> None:
     for message in asyncio.run(notify_all(group)):
+        print(f"Надіслано: {message}")
+
+
+@command("11", "розіслати результати пакетами")
+@timed
+def send_results_in_batches(group: Group) -> None:
+    for message in asyncio.run(notify_in_batches(group)):
         print(f"Надіслано: {message}")
 
 
