@@ -1,10 +1,13 @@
 """Збереження групи у файлі JSON."""
 
 import json
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, TextIO
 
+from student_portal.decorators import timed
 from student_portal.exceptions import StorageError
 from student_portal.grades import Grade
 from student_portal.group import Group
@@ -44,9 +47,23 @@ def group_from_dict(data: dict[str, Any]) -> Group:
     return group
 
 
-def save_group(group: Group, path: Path) -> None:
+@contextmanager
+def atomic_write(path: Path) -> Iterator[TextIO]:
+    """Записує файл повністю або залишає попередню версію без змін."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as file:
+    temp = path.with_name(f".{path.name}.tmp")
+    try:
+        with temp.open("w", encoding="utf-8") as file:
+            yield file
+    except BaseException:
+        temp.unlink(missing_ok=True)
+        raise
+    temp.replace(path)
+
+
+@timed
+def save_group(group: Group, path: Path) -> None:
+    with atomic_write(path) as file:
         json.dump(group_to_dict(group), file, ensure_ascii=False, indent=2)
 
 

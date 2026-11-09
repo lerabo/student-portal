@@ -18,6 +18,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "mypy>=2.3.1",
     "ruff>=0.16.9",
 ]
 
@@ -27,3 +28,6 @@ line-length = 88
 [tool.ruff.lint]
 # pycodestyle, pyflakes, isort, pep8-naming, pyupgrade, bugbear, simplify
 select = ["E", "W", "F", "I", "N", "UP", "B", "SIM"]
+
+[tool.mypy]
+strict = true

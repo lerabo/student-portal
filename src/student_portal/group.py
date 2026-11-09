@@ -1,12 +1,14 @@
 """Академічна група."""
 
+import copy
 from collections import Counter
 from collections.abc import Iterator
 from dataclasses import dataclass, field
 from statistics import fmean
+from types import TracebackType
 
 from student_portal.exceptions import DuplicateStudentError, StudentNotFoundError
-from student_portal.grades import ECTS_LETTERS
+from student_portal.grades import ECTS_LETTERS, Grade
 from student_portal.people import Student
 
 
@@ -60,13 +62,44 @@ class Group:
         averages = [avg for s in self if (avg := s.average()) is not None]
         return fmean(averages) if averages else None
 
+    def iter_grades(self) -> Iterator[tuple[Student, Grade]]:
+        """Видає пари «студент - оцінка» для всіх оцінок групи."""
+        for student in self:
+            for grade in student.grades:
+                yield student, grade
+
     def courses(self) -> set[str]:
-        return {g.course for s in self for g in s.grades}
+        return {grade.course for _, grade in self.iter_grades()}
 
     def ects_distribution(self) -> dict[str, int]:
-        counts = Counter(g.ects for s in self for g in s.grades)
+        counts = Counter(grade.ects for _, grade in self.iter_grades())
         return {letter: counts[letter] for letter in ECTS_LETTERS if counts[letter]}
+
+    def transaction(self) -> Transaction:
+        """Повертає контекстний менеджер, що скасовує зміни в разі помилки."""
+        return Transaction(self)
 
     def debtors(self) -> list[Student]:
         """Студенти з хоча б однією оцінкою Fx (варіант 2)."""
         return [s for s in self if s.is_debtor()]
+
+
+class Transaction:
+    """Відновлює студентів групи, якщо блок with завершився винятком."""
+
+    def __init__(self, group: Group) -> None:
+        self._group = group
+        self._snapshot: dict[int, Student] = {}
+
+    def __enter__(self) -> Group:
+        self._snapshot = copy.deepcopy(self._group.students)
+        return self._group
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        tb: TracebackType | None,
+    ) -> None:
+        if exc_type is not None:
+            self._group.students = self._snapshot
