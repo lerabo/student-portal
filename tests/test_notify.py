@@ -14,6 +14,7 @@ from student_portal.notify import chunks, notify_all, notify_in_batches
         pytest.param([1, 2, 3, 4, 5], 2, [[1, 2], [3, 4], [5]], id="remainder"),
         pytest.param([1, 2, 3], 1, [[1], [2], [3]], id="size-1"),
         pytest.param([1, 2], 5, [[1, 2]], id="size-bigger"),
+        pytest.param([1, 2, 3], 3, [[1, 2, 3]], id="size-equal"),
         pytest.param([], 3, [], id="empty"),
     ],
 )
