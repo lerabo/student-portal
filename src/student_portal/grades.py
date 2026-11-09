@@ -13,7 +13,7 @@ ECTS_LETTERS = ("A", "B", "C", "D", "E", "Fx")
 def ects_grade(score: int) -> str:
     """Переводить бали (0–100) у літеру шкали ECTS."""
     match score:
-        case s if s >= 90:
+        case s if s > 90:
             return "A"
         case s if s >= 82:
             return "B"
