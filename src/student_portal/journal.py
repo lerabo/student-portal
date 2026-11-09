@@ -40,7 +40,7 @@ def read_rows(path: Path) -> Iterator[Row]:
             for row in reader:
                 yield reader.line_num, row
     except FileNotFoundError as error:
-        raise StorageError(f"журнал не знайдено: {path}") from error
+        raise StorageError(f"журнал не знайдено: {path.as_posix()}") from error
 
 
 def parse_entries(rows: Iterable[Row]) -> Iterator[JournalEntry]:
