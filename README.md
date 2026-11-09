@@ -49,6 +49,22 @@ student_id;course;score;graded_on
 з файлу не буде додано, а меню покаже номер рядка з помилкою. Приклади:
 `data/journal.csv` і `data/journal-broken.csv`.
 
+## Сервер деканату
+
+Пункт меню 12 завантажує групу у форматі `group.json` із сервера деканату і
+пропонує замінити нею поточну. Адресу задає змінна середовища `DEKANAT_URL`
+(за замовчуванням `https://dekanat.example.edu/api/groups/kn-11`). Якщо сервер
+недоступний, не відповів за 5 с або повернув дані в неправильному форматі,
+меню показує помилку і продовжує роботу.
+
+Для ручної перевірки роздайте файл даних локальним вебсервером:
+
+~~~bash
+uv run python -m http.server 8001 -d data                                # перший термінал
+DEKANAT_URL=http://127.0.0.1:8001/group.json uv run student-portal       # Linux, macOS
+$env:DEKANAT_URL="http://127.0.0.1:8001/group.json"; uv run student-portal  # PowerShell
+~~~
+
 ## Тести
 
 Модульні тести pytest лежать у теці `tests/`, спільні фікстури - у `tests/conftest.py`.
@@ -60,6 +76,23 @@ uv run pytest -k journal      # лише тести, у назві яких є �
 ~~~
 
 Тести працюють із файлами лише у тимчасовій теці (`tmp_path`) і не змінюють `data/`.
+Мережу (`urlopen`), затримки розсилки і `input()` підміняють дублери, тож тести
+не звертаються до сервера і нічого не чекають.
+
+## Покриття і CI
+
+Покриття рахується з розгалуженнями; поріг - 90 % (`[tool.coverage]` у
+`pyproject.toml`), нижче нього `pytest --cov` завершується помилкою.
+
+~~~bash
+uv run pytest --cov                          # звіт у терміналі з непокритими рядками
+uv run pytest --cov --cov-report=html        # HTML-звіт у htmlcov/index.html
+~~~
+
+На кожен pull request і push у `main` GitHub Actions (`.github/workflows/ci.yml`)
+запускає два завдання: `checks` (Ruff і mypy) і `tests` (pytest з покриттям,
+HTML-звіт зберігається як артефакт `coverage-html`). Правило гілки `main`
+дозволяє злиття лише після зелених `checks` і `tests`.
 
 ## Перевірки
 
