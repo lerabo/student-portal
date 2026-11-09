@@ -33,3 +33,14 @@ def make_student() -> StudentFactory:
         return Student(next_id, "Студент", last_name, grades)
 
     return make
+
+
+@pytest.fixture
+def answers(monkeypatch: pytest.MonkeyPatch) -> Callable[..., None]:
+    """Підміняє input(): кожен виклик повертає наступну відповідь зі списку."""
+
+    def set_answers(*values: str) -> None:
+        replies = iter(values)
+        monkeypatch.setattr("builtins.input", lambda prompt="": next(replies))
+
+    return set_answers

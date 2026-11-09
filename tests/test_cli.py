@@ -2,20 +2,10 @@ import logging
 
 import pytest
 
-from student_portal import cli
+from student_portal import cli, notify
 from student_portal.cli import run
 from student_portal.decorators import timed
-
-
-@pytest.fixture
-def answers(monkeypatch):
-    """Підміняє input(): кожен виклик повертає наступну відповідь зі списку."""
-
-    def set_answers(*values: str) -> None:
-        replies = iter(values)
-        monkeypatch.setattr("builtins.input", lambda prompt="": next(replies))
-
-    return set_answers
+from student_portal.grades import Grade
 
 
 def test_menu_adds_student(group, answers, capsys):
@@ -98,3 +88,50 @@ def test_timed_logs_even_when_function_fails(caplog):
         fail()
 
     assert "fail: " in caplog.text
+
+
+@pytest.mark.parametrize(
+    ("replies", "expected"),
+    [
+        pytest.param(("1",), "Бойко Ірина", id="1-list"),
+        pytest.param(("2",), "  1  Коваль Олена", id="2-ranking"),
+        pytest.param(("3", "мельн"), "Мельник Андрій", id="3-found"),
+        pytest.param(("3", "Шевч"), "Нікого не знайдено", id="3-not-found"),
+        pytest.param(("6", "3"), "Видалено: Бойко Ірина", id="6-remove"),
+        pytest.param(("7",), "A  █ 1", id="7-ects"),
+        pytest.param(("8",), "Боржників немає", id="8-no-debtors"),
+        pytest.param(("10",), "Надіслано: Коваль Олена: середній бал 91.5", id="10"),
+        pytest.param(("11",), "Надіслано: Бойко Ірина: оцінок немає", id="11"),
+    ],
+)
+def test_menu_command_output(monkeypatch, group, answers, capsys, replies, expected):
+    monkeypatch.setattr(notify, "SEND_DELAY", 0)
+    answers(*replies, "0")
+
+    run(group)
+
+    assert expected in capsys.readouterr().out
+
+
+def test_menu_shows_debtors(group, answers, capsys):
+    group.get(3).add_grade(Grade("Python", 40))
+    answers("8", "0")
+
+    run(group)
+
+    out = capsys.readouterr().out
+    assert "Бойко Ірина" in out
+    assert "Коваль Олена" not in out
+
+
+def test_menu_imports_journal(group, answers, capsys, tmp_path):
+    journal = tmp_path / "journal.csv"
+    journal.write_text(
+        "student_id;course;score;graded_on\n3;Git;77;2026-10-20\n", encoding="utf-8"
+    )
+    answers("9", str(journal), "0")
+
+    run(group)
+
+    assert "Імпортовано оцінок: 1" in capsys.readouterr().out
+    assert group.get(3).average() == 77
