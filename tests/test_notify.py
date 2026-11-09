@@ -117,3 +117,39 @@ def test_notify_in_batches_matches_notify_all(group):
     batched = asyncio.run(notify_in_batches(group, 2))
 
     assert batched == asyncio.run(notify_all(group, 2))
+
+
+@pytest.fixture
+def five_students(make_student):
+    return [make_student(name, 70) for name in ("А", "Б", "В", "Г", "Ґ")]
+
+
+@pytest.mark.parametrize(
+    ("size", "expected"),
+    [
+        pytest.param(2, [{"А", "Б"}, {"В", "Г"}, {"Ґ"}], id="size-2"),
+        pytest.param(3, [{"А", "Б", "В"}, {"Г", "Ґ"}], id="size-3"),
+        pytest.param(1, [{"А"}, {"Б"}, {"В"}, {"Г"}, {"Ґ"}], id="size-1"),
+    ],
+)
+def test_notify_in_batches_sends_each_batch_together(
+    mocker, five_students, size, expected
+):
+    running: set[str] = set()
+    seen_together: list[frozenset[str]] = []
+
+    async def fake_send(student):
+        running.add(student.last_name)
+        await asyncio.sleep(0)  # дати стартувати решті пакета
+        seen_together.append(frozenset(running))
+        await asyncio.sleep(0)
+        running.discard(student.last_name)
+        return student.last_name
+
+    send = mocker.patch("student_portal.notify.send_result", side_effect=fake_send)
+
+    messages = asyncio.run(notify_in_batches(five_students, size))
+
+    assert messages == ["А", "Б", "В", "Г", "Ґ"]
+    assert list(dict.fromkeys(seen_together)) == [frozenset(b) for b in expected]
+    assert send.await_count == 5
