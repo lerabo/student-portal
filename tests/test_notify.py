@@ -4,7 +4,64 @@ import inspect
 import pytest
 
 from student_portal import notify
-from student_portal.notify import chunks, notify_all, notify_in_batches
+from student_portal.notify import (
+    chunks,
+    notify_all,
+    notify_in_batches,
+    notify_sequentially,
+    send_result,
+)
+
+
+@pytest.fixture(autouse=True)
+def no_delay(monkeypatch):
+    """Тести не чекають «поштовий сервер»."""
+    monkeypatch.setattr(notify, "SEND_DELAY", 0)
+
+
+@pytest.mark.parametrize(
+    ("index", "expected"),
+    [
+        pytest.param(0, "Коваль Олена: середній бал 91.5", id="with-grades"),
+        pytest.param(2, "Бойко Ірина: оцінок немає", id="no-grades"),
+    ],
+)
+def test_send_result_text(group, index, expected):
+    student = list(group)[index]
+
+    assert asyncio.run(send_result(student)) == expected
+
+
+def test_notify_sequentially_keeps_order(group):
+    messages = asyncio.run(notify_sequentially(group))
+
+    assert [m.split(":")[0] for m in messages] == [
+        "Коваль Олена",
+        "Мельник Андрій",
+        "Бойко Ірина",
+    ]
+
+
+@pytest.mark.parametrize("limit", [1, 2, 3])
+def test_notify_all_respects_limit_and_order(mocker, group, limit):
+    active = 0
+    peak = 0
+
+    async def fake_send(student):
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        await asyncio.sleep(0.01)
+        active -= 1
+        return student.last_name
+
+    send = mocker.patch("student_portal.notify.send_result", side_effect=fake_send)
+
+    messages = asyncio.run(notify_all(group, limit=limit))
+
+    assert messages == ["Коваль", "Мельник", "Бойко"]
+    assert peak == limit
+    assert send.await_count == 3
 
 
 @pytest.mark.parametrize(
@@ -45,13 +102,6 @@ def test_chunks_rejects_non_positive_size(size):
         next(batches)
 
 
-@pytest.fixture
-def no_delay(monkeypatch):
-    """Прибирає імітацію затримки поштового сервера."""
-    monkeypatch.setattr(notify, "SEND_DELAY", 0)
-
-
-@pytest.mark.usefixtures("no_delay")
 @pytest.mark.parametrize("size", [1, 2, 3, 5])
 def test_notify_in_batches_keeps_student_order(group, size):
     messages = asyncio.run(notify_in_batches(group, size))
@@ -63,7 +113,6 @@ def test_notify_in_batches_keeps_student_order(group, size):
     ]
 
 
-@pytest.mark.usefixtures("no_delay")
 def test_notify_in_batches_matches_notify_all(group):
     batched = asyncio.run(notify_in_batches(group, 2))
 
