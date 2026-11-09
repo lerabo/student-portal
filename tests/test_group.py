@@ -2,7 +2,11 @@ import inspect
 
 import pytest
 
-from student_portal.exceptions import DuplicateStudentError, StudentNotFoundError
+from student_portal.exceptions import (
+    DuplicateStudentError,
+    InvalidGradeError,
+    StudentNotFoundError,
+)
 from student_portal.grades import Grade
 from student_portal.group import Group
 from student_portal.people import Student
@@ -129,3 +133,23 @@ def test_add_grade_through_group(group):
     group.get(3).add_grade(Grade("Python", 74))
 
     assert group.average() == pytest.approx((91.5 + 61 + 74) / 3)
+
+
+def test_transaction_keeps_changes_without_error(group):
+    with group.transaction():
+        group.remove(2)
+        group.get(3).add_grade(Grade("Python", 70))
+
+    assert [s.id for s in group] == [1, 3]
+    assert group.get(3).average() == pytest.approx(70)
+
+
+def test_transaction_restores_group_after_error(group):
+    before = [(s.id, s.average()) for s in group]
+
+    with pytest.raises(InvalidGradeError), group.transaction():
+        group.remove(2)
+        group.get(3).add_grade(Grade("Python", 70))
+        group.get(1).add_grade(Grade("Python", 105))
+
+    assert [(s.id, s.average()) for s in group] == before
