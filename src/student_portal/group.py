@@ -45,7 +45,7 @@ class Group:
         return max(self.students, default=0) + 1
 
     def find(self, query: str) -> list[Student]:
-        needle = query.casefold()
+        needle = query.strip().casefold()
         return [s for s in self if needle in s.last_name.casefold()]
 
     def ranking(self) -> list[Student]:
