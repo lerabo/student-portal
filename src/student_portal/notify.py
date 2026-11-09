@@ -1,7 +1,7 @@
 """Асинхронна розсилка результатів студентам."""
 
 import asyncio
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 
 from student_portal.people import Student
 
@@ -36,3 +36,27 @@ async def notify_all(
     async with asyncio.TaskGroup() as tg:
         tasks = [tg.create_task(send(student)) for student in students]
     return [task.result() for task in tasks]
+
+
+def chunks[T](items: Iterable[T], size: int) -> Iterator[list[T]]:
+    """Видає елементи пакетами по size штук; останній пакет може бути меншим."""
+    if size < 1:
+        raise ValueError("розмір пакета має бути не менше 1")
+    batch: list[T] = []
+    for item in items:
+        batch.append(item)
+        if len(batch) == size:
+            yield batch
+            batch = []
+    if batch:
+        yield batch
+
+
+async def notify_in_batches(
+    students: Iterable[Student], size: int = MAX_CONCURRENT
+) -> list[str]:
+    """Надсилає листи пакетами: наступний пакет стартує після всього попереднього."""
+    messages: list[str] = []
+    for batch in chunks(students, size):
+        messages.extend(await asyncio.gather(*(send_result(s) for s in batch)))
+    return messages
