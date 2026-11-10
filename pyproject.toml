@@ -43,13 +43,14 @@ strict = true
 
 [tool.pytest]
 minversion = "9.0"
+DJANGO_SETTINGS_MODULE = "config.settings"
 testpaths = ["tests"]
 addopts = ["-ra"]
 strict = true
 
 [tool.coverage.run]
 branch = true
-source = ["student_portal"]
+source = ["student_portal", "students"]
 
 [tool.coverage.report]
 show_missing = true
