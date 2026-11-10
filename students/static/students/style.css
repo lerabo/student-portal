@@ -12,3 +12,10 @@ th { background: #f3f3f3; }
 .grade-d { background: #fcefc7; }
 .grade-e { background: #fde2c4; }
 .grade-fx { background: #f8d0d0; }
+
+/* Користувач і вихід у меню, повідомлення, помилки форм */
+nav .user { margin-left: 1rem; color: #555; }
+nav form.logout { display: inline; margin-left: 0.5rem; }
+.message { background: #e7f1fb; border-left: 4px solid #2f6fb5; padding: 0.5rem 0.75rem; }
+.errorlist { color: #b00020; margin: 0.25rem 0; padding-left: 1.25rem; }
+form p { margin: 0.5rem 0; }

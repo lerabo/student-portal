@@ -10,8 +10,16 @@
   <nav>
     <a href="{% url 'students:list' %}">Студенти</a>
     <a href="{% url 'students:ranking' %}">Рейтинг</a>
+    {% if user.is_authenticated %}
+      <span class="user">{{ user.get_username }}</span>
+      <form method="post" action="{% url 'logout' %}" class="logout">
+        {% csrf_token %}
+        <button type="submit">Вийти</button>
+      </form>
+    {% endif %}
   </nav>
   <main>
+    {% for message in messages %}<p class="message">{{ message }}</p>{% endfor %}
     {% block content %}{% endblock %}
   </main>
 </body>

@@ -50,12 +50,17 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "config.middleware.read_only_middleware",
     "config.middleware.StorageErrorMiddleware",
 ]
+
+# Вхід обов'язковий на всьому сайті; після входу - список, після виходу - вхід
+LOGIN_REDIRECT_URL = "students:list"
+LOGOUT_REDIRECT_URL = "login"
 
 SLOW_REQUEST_MS = 500
 
