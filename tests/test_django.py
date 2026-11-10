@@ -1,10 +1,14 @@
-"""Django-частина: сторінка рейтингу, команда group_stats, налаштування."""
+"""Django-частина: сторінка рейтингу, команди group_stats і debtors, налаштування."""
+
+import io
 
 import pytest
 from django.conf import settings as django_settings
 from django.core.management import CommandError, call_command
+from django.core.management.color import color_style
 from django.urls import reverse
 
+from student_portal.grades import Grade
 from student_portal.storage import save_group
 from students.management.commands.group_stats import students_word
 
@@ -87,3 +91,53 @@ def test_data_file_setting_points_to_project_data():
     assert django_settings.STUDENT_PORTAL_DATA == (
         django_settings.BASE_DIR / "data" / "group.json"
     )
+
+
+@pytest.fixture
+def debtors_file(tmp_path, settings, group):
+    """Група з трьох студентів, у Бойко - Fx з Python і Git."""
+    student = group.get(3)
+    for course, score in (("Python", 40), ("Git", 55), ("Бази даних", 70)):
+        student.add_grade(Grade(course, score))
+    path = tmp_path / "group.json"
+    save_group(group, path)
+    settings.STUDENT_PORTAL_DATA = path
+    return path
+
+
+def test_debtors_lists_students_and_failed_courses(debtors_file, capsys):
+    call_command("debtors")
+
+    out = capsys.readouterr().out
+    assert out == "Боржники групи КН-11:\n  Бойко Ірина: Git, Python\n"
+
+
+@pytest.mark.parametrize(
+    ("course", "expected"),
+    [
+        pytest.param(
+            "Python",
+            "Боржники групи КН-11 з дисципліни Python:\n  Бойко Ірина: Python\n",
+            id="debtor",
+        ),
+        pytest.param("Бази даних", "Боржників немає\n", id="no-debtors"),
+    ],
+)
+def test_debtors_by_course(debtors_file, capsys, course, expected):
+    call_command("debtors", str(debtors_file), course=course)
+
+    assert capsys.readouterr().out == expected
+
+
+def test_debtors_group_without_fx_prints_success(data_file):
+    out = io.StringIO()
+
+    call_command("debtors", stdout=out, force_color=True)
+
+    styled = color_style(force_color=True).SUCCESS("Боржників немає")
+    assert out.getvalue() == styled + "\n"
+
+
+def test_debtors_missing_file_raises_command_error(tmp_path):
+    with pytest.raises(CommandError, match="не знайдено"):
+        call_command("debtors", str(tmp_path / "nope.json"))
