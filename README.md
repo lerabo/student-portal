@@ -94,12 +94,31 @@ uv run --env-file .env python manage.py group_stats data/group.json
 uv run --env-file .env python manage.py debtors --course Python
 ~~~
 
-Сторінка `/students/` показує рейтинг групи з `data/group.json`. Команда
+Сторінки описано нижче, дані вони беруть з `data/group.json`. Команда
 `group_stats` друкує кількість студентів і розподіл оцінок за шкалою ECTS,
 `debtors` - боржників з дисциплінами заборгованості (параметр `--course` обмежує
 однією дисципліною; шлях до файлу необов'язковий). Щоб не писати `--env-file`
 щоразу, виконайте `export UV_ENV_FILE=.env` (bash/zsh) або
 `$env:UV_ENV_FILE=".env"` (PowerShell).
+
+### Сторінки
+
+| Адреса | Що показує | Представлення |
+| --- | --- | --- |
+| `/students/` | список студентів з пошуком за прізвищем (`?q=`) | `student_list` (FBV) |
+| `/students/<id>/` | картка студента: оцінки, середній бал, літера ECTS | `student_detail` (FBV) |
+| `/students/<id>.json` | дані студента у JSON | `student_json` (FBV) |
+| `/students/ranking/` | рейтинг групи | `RankingView` (`TemplateView`) |
+| `/students/pages/` | рейтинг по два студенти на сторінці (`?page=`) | `StudentListView` (`ListView`) |
+
+Усі сторінки успадковують `templates/base.html`. Стилі лежать у
+`students/static/students/style.css`; рядки оцінок на картці мають колір за
+шкалою ECTS (фільтр `grade_class`). Для розгортання статичні файли збирають у
+`staticfiles/` (тека в `.gitignore`):
+
+~~~bash
+uv run --env-file .env python manage.py collectstatic --noinput
+~~~
 
 ## Тести
 

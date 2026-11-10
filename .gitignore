@@ -224,3 +224,6 @@ media/
 .idea/
 .vscode/
 .DS_Store
+
+# Django collectstatic
+staticfiles/

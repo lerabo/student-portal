@@ -1,0 +1,18 @@
+{% load static %}
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="{% static 'students/style.css' %}">
+  <title>{% block title %}Система управління студентами{% endblock %}</title>
+</head>
+<body>
+  <nav>
+    <a href="{% url 'students:list' %}">Студенти</a>
+    <a href="{% url 'students:ranking' %}">Рейтинг</a>
+  </nav>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>
