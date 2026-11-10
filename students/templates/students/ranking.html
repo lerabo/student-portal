@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <title>Рейтинг групи {{ group.name }}</title>
+</head>
+<body>
+  <h1>Рейтинг групи {{ group.name }}</h1>
+  <ol>
+    {% for student in group.ranking %}
+      {% with avg=student.average %}
+        <li>{{ student.full_name }}: {% if avg is None %}немає оцінок{% else %}{{ avg|floatformat:1 }}{% endif %}</li>
+      {% endwith %}
+    {% endfor %}
+  </ol>
+</body>
+</html>

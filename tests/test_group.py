@@ -188,3 +188,30 @@ def test_debtors_lists_each_student_once_in_group_order(make_student):
 
 def test_group_without_debtors(group):
     assert group.debtors() == []
+
+
+def test_failed_courses_sorted_and_unique():
+    student = Student(
+        1,
+        "Максим",
+        "Бондар",
+        [
+            Grade("Python", 45),
+            Grade("Бази даних", 30),
+            Grade("Python", 20),
+            Grade("Git", 90),
+        ],
+    )
+
+    assert student.failed_courses() == ["Python", "Бази даних"]
+
+
+def test_debtors_by_course():
+    group = Group("КН-11")
+    group.add(Student(1, "Максим", "Бондар", [Grade("Python", 45)]))
+    group.add(Student(2, "Ірина", "Шевчук", [Grade("Бази даних", 50)]))
+    group.add(Student(3, "Олена", "Коваль", [Grade("Python", 95)]))
+
+    assert [s.last_name for s in group.debtors("Python")] == ["Бондар"]
+    assert [s.last_name for s in group.debtors("Бази даних")] == ["Шевчук"]
+    assert group.debtors("Git") == []
