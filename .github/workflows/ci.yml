@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+env:
+  # Ключ лише для перевірок і тестів у CI; справжній ключ продакшну - у секретах
+  DJANGO_SECRET_KEY: ci-only-not-a-secret
+
 jobs:
   checks:
     runs-on: ubuntu-latest
@@ -15,6 +19,8 @@ jobs:
       - run: uv run ruff check --output-format=github .
       - run: uv run ruff format --check .
       - run: uv run mypy src
+      - run: uv run python manage.py check
+      - run: uv run python manage.py makemigrations --check --dry-run
 
   tests:
     runs-on: ubuntu-latest
