@@ -8,7 +8,7 @@
 <table>
   <tr><th>Дисципліна</th><th>Бали</th><th>ECTS</th><th>Дата</th></tr>
   {% for grade in student.grades %}
-    <tr>
+    <tr class="{{ grade.score|grade_class }}">
       <td>{{ grade.course }}</td>
       <td>{{ grade.score }}</td>
       <td>{{ grade.ects }}</td>

@@ -1,5 +1,6 @@
 """Представлення і шаблони застосунку students."""
 
+import re
 from datetime import date
 
 import pytest
@@ -14,7 +15,7 @@ from pytest_django.asserts import (
 from student_portal.grades import Grade
 from student_portal.people import Student
 from student_portal.storage import save_group
-from students.templatetags.grades import ects
+from students.templatetags.grades import ects, grade_class
 
 
 def test_list_shows_students_in_group_order(client, data_file):
@@ -152,3 +153,35 @@ def test_names_are_escaped(client, tmp_path, settings, group):
 )
 def test_ects_filter(score, letter):
     assert ects(score) == letter
+
+
+@pytest.mark.parametrize(
+    ("score", "css_class"),
+    [
+        pytest.param(100, "grade-a", id="100"),
+        pytest.param(90, "grade-a", id="90"),
+        pytest.param(89, "grade-b", id="89"),
+        pytest.param(82, "grade-b", id="82"),
+        pytest.param(81, "grade-c", id="81"),
+        pytest.param(75, "grade-c", id="75"),
+        pytest.param(74, "grade-d", id="74"),
+        pytest.param(67, "grade-d", id="67"),
+        pytest.param(66, "grade-e", id="66"),
+        pytest.param(60, "grade-e", id="60"),
+        pytest.param(59, "grade-fx", id="59"),
+        pytest.param(0, "grade-fx", id="0"),
+        pytest.param(None, "", id="none"),
+    ],
+)
+def test_grade_class_filter(score, css_class):
+    assert grade_class(score) == css_class
+
+
+def test_detail_row_has_grade_class(client, data_file):
+    response = client.get(reverse("students:detail", args=[2]))
+
+    row = re.search(
+        r'<tr class="([^"]*)">\s*<td>Python</td>\s*<td>61</td>', response.text
+    )
+    assert row is not None
+    assert row.group(1) == "grade-e"

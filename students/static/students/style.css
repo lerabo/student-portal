@@ -4,3 +4,11 @@ nav a { margin-right: 1rem; }
 table { border-collapse: collapse; }
 td, th { border: 1px solid #ccc; padding: 0.25rem 0.5rem; text-align: left; }
 th { background: #f3f3f3; }
+
+/* Колір рядка оцінки за шкалою ECTS (варіант 2) */
+.grade-a { background: #d9f2d9; }
+.grade-b { background: #e6f5d0; }
+.grade-c { background: #f2f5cc; }
+.grade-d { background: #fcefc7; }
+.grade-e { background: #fde2c4; }
+.grade-fx { background: #f8d0d0; }

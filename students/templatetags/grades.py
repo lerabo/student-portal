@@ -11,3 +11,10 @@ def ects(score):
     if score is None:
         return ""
     return ects_grade(score)
+
+
+@register.filter
+def grade_class(score):
+    """{{ grade.score|grade_class }} → CSS-клас grade-a … grade-fx; для None - ""."""
+    letter = ects(score)
+    return f"grade-{letter.lower()}" if letter else ""
