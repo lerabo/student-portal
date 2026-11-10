@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
     "students",
 ]
 
@@ -50,12 +51,17 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.auth.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "config.middleware.read_only_middleware",
     "config.middleware.StorageErrorMiddleware",
 ]
+
+# Вхід обов'язковий на всьому сайті; після входу - список, після виходу - вхід
+LOGIN_REDIRECT_URL = "students:list"
+LOGOUT_REDIRECT_URL = "login"
 
 SLOW_REQUEST_MS = 500
 
@@ -65,6 +71,15 @@ PORTAL_READ_ONLY = os.environ.get("DJANGO_READ_ONLY", "0") == "1"
 SECURE_CSP = {
     "default-src": [CSP.SELF],
     "img-src": [CSP.SELF, "data:"],
+}
+
+# REST API: лише після входу, зміни - за правами моделі; списки по 20 записів
+REST_FRAMEWORK = {
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.DjangoModelPermissions",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 20,
 }
 
 ROOT_URLCONF = "config.urls"
