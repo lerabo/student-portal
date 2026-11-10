@@ -39,8 +39,11 @@ def test_anonymous_is_redirected_to_login(anonymous, db):
     )
 
 
-def test_login_page_is_open(anonymous, db):
-    assertContains(anonymous.get(reverse("login")), "Увійти")
+def test_login_page_is_open_without_menu(anonymous, db):
+    response = anonymous.get(reverse("login"))
+
+    assertContains(response, "Увійти")
+    assertNotContains(response, 'href="/students/"')
 
 
 def test_login_with_password_redirects_to_list(anonymous, django_user_model):
