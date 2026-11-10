@@ -30,6 +30,7 @@ dev = [
 
 [tool.ruff]
 line-length = 88
+extend-exclude = ["*/migrations/*"]
 
 [tool.ruff.lint]
 # pycodestyle, pyflakes, isort, pep8-naming, pyupgrade, bugbear, simplify
