@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.views.generic import ListView, TemplateView
 
 from .services import get_group, get_student_or_404
 
@@ -29,6 +30,21 @@ def student_json(request, student_id):
     )
 
 
-def ranking(request):
-    group = get_group()
-    return render(request, "students/ranking.html", {"group": group})
+class RankingView(TemplateView):
+    template_name = "students/ranking.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group = get_group()
+        context["group"] = group
+        context["ranking"] = group.ranking()
+        return context
+
+
+class StudentListView(ListView):
+    template_name = "students/student_pages.html"
+    context_object_name = "students"
+    paginate_by = 2
+
+    def get_queryset(self):
+        return get_group().ranking()

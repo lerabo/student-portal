@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}{{ block.super }}: рейтинг по сторінках{% endblock %}
+
+{% block content %}
+<h1>Рейтинг по сторінках</h1>
+<ol start="{{ page_obj.start_index }}">
+  {% for student in students %}
+    <li>{{ student.full_name }}: {{ student.average|floatformat:1|default:"немає оцінок" }}</li>
+  {% endfor %}
+</ol>
+<p>
+  {% if page_obj.has_previous %}<a href="?page={{ page_obj.previous_page_number }}">назад</a>{% endif %}
+  Сторінка {{ page_obj.number }} з {{ paginator.num_pages }}
+  {% if page_obj.has_next %}<a href="?page={{ page_obj.next_page_number }}">далі</a>{% endif %}
+</p>
+{% endblock %}
