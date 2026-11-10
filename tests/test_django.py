@@ -59,6 +59,7 @@ def test_group_stats_prints_name_and_distribution(data_file, capsys):
         pytest.param(5, "студентів", id="5"),
         pytest.param(11, "студентів", id="11"),
         pytest.param(12, "студентів", id="12"),
+        pytest.param(14, "студентів", id="14"),
         pytest.param(21, "студент", id="21"),
         pytest.param(22, "студенти", id="22"),
     ],
