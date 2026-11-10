@@ -35,6 +35,9 @@ line-length = 88
 # pycodestyle, pyflakes, isort, pep8-naming, pyupgrade, bugbear, simplify
 select = ["E", "W", "F", "I", "N", "UP", "B", "SIM"]
 
+[tool.ruff.lint.per-file-ignores]
+"config/settings.py" = ["E501"]
+
 [tool.mypy]
 strict = true
 
