@@ -7,6 +7,7 @@ import pytest
 from student_portal.grades import Grade
 from student_portal.group import Group
 from student_portal.people import Student
+from student_portal.storage import save_group
 
 type StudentFactory = Callable[..., Student]
 
@@ -44,3 +45,12 @@ def answers(monkeypatch: pytest.MonkeyPatch) -> Callable[..., None]:
         monkeypatch.setattr("builtins.input", lambda prompt="": next(replies))
 
     return set_answers
+
+
+@pytest.fixture
+def data_file(tmp_path, settings, group):
+    """Файл групи з трьох студентів замість data/group.json."""
+    path = tmp_path / "group.json"
+    save_group(group, path)
+    settings.STUDENT_PORTAL_DATA = path
+    return path

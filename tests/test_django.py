@@ -7,35 +7,26 @@ from django.conf import settings as django_settings
 from django.core.management import CommandError, call_command
 from django.core.management.color import color_style
 from django.urls import reverse
+from pytest_django.asserts import assertContains, assertTemplateUsed
 
 from student_portal.grades import Grade
 from student_portal.storage import save_group
 from students.management.commands.group_stats import students_word
 
 
-@pytest.fixture
-def data_file(tmp_path, settings, group):
-    """Файл групи з трьох студентів замість data/group.json."""
-    path = tmp_path / "group.json"
-    save_group(group, path)
-    settings.STUDENT_PORTAL_DATA = path
-    return path
-
-
 def test_ranking_page_lists_best_student_first(client, data_file):
     response = client.get(reverse("students:ranking"))
 
-    assert response.status_code == 200
-    assert [t.name for t in response.templates] == ["students/ranking.html"]
+    assertTemplateUsed(response, "students/ranking.html")
     assert response.context["group"].name == "КН-11"
-    assert "<li>Коваль Олена: 91,5</li>" in response.text
+    assertContains(response, "<li>Коваль Олена: 91,5</li>", html=True)
 
 
 def test_ranking_page_shows_student_without_grades_last(client, data_file):
     response = client.get(reverse("students:ranking"))
 
-    items = [line.strip() for line in response.text.splitlines() if "<li>" in line]
-    assert items[-1] == "<li>Бойко Ірина: немає оцінок</li>"
+    assert response.context["ranking"][-1].last_name == "Бойко"
+    assertContains(response, "<li>Бойко Ірина: немає оцінок</li>", html=True)
 
 
 def test_unknown_url_returns_404(client, data_file):
