@@ -6,7 +6,7 @@
 <h1>Рейтинг по сторінках</h1>
 <ol start="{{ page_obj.start_index }}">
   {% for student in students %}
-    <li>{{ student.full_name }}: {{ student.average|floatformat:1|default:"немає оцінок" }}</li>
+    <li>{% include "students/_student_line.html" %}</li>
   {% endfor %}
 </ol>
 <p>
