@@ -48,7 +48,9 @@ class StorageErrorMiddleware:
     def process_exception(self, request, exception):
         if isinstance(exception, StorageError | DatabaseError):
             logger.error("Сховище недоступне: %s", exception)
-            return render(request, "503.html", status=503)
+            response = render(request, "503.html", status=503)
+            response["Retry-After"] = "60"
+            return response
         return None  # інші винятки обробить Django
 
 

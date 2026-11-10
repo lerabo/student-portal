@@ -52,6 +52,7 @@ def test_empty_database_shows_503_page(client, db, caplog):
     response = client.get("/students/")
 
     assert response.status_code == 503
+    assert response["Retry-After"] == "60"
     assertTemplateUsed(response, "503.html")
     assertContains(response, "Сервіс тимчасово недоступний", status_code=503)
     assert "у базі даних немає групи" in caplog.text
