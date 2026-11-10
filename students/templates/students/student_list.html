@@ -27,4 +27,7 @@
   {% endfor %}
 </table>
 <p>Усього: {{ students|length }}</p>
+{% if perms.students.add_student %}
+<p><a href="{% url 'students:create' %}">Новий студент</a></p>
+{% endif %}
 {% endblock %}

@@ -1,8 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
+from django.contrib.auth.mixins import PermissionRequiredMixin
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.generic import ListView, TemplateView
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 
 from student_portal.grades import ects_grade
 
@@ -91,3 +93,20 @@ class StudentListView(ListView):
 
     def get_queryset(self):
         return get_group().ranking()
+
+
+class StudentCreateView(PermissionRequiredMixin, CreateView):
+    model = models.Student
+    fields = ["first_name", "last_name", "group"]
+    permission_required = "students.add_student"
+    success_url = reverse_lazy("students:list")
+
+
+class StudentUpdateView(PermissionRequiredMixin, UpdateView):
+    model = models.Student
+    fields = ["first_name", "last_name", "group"]
+    permission_required = "students.change_student"
+    pk_url_kwarg = "student_id"
+
+    def get_success_url(self):
+        return reverse_lazy("students:detail", args=[self.object.pk])

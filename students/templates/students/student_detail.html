@@ -27,5 +27,8 @@
 {% if perms.students.add_grade %}
 <p><a href="{% url 'students:add-grade' student.id %}">Нова оцінка</a></p>
 {% endif %}
+{% if perms.students.change_student %}
+<p><a href="{% url 'students:edit' student.id %}">Змінити</a></p>
+{% endif %}
 <p><a href="{% url 'students:detail-json' student.id %}">JSON</a></p>
 {% endblock %}
