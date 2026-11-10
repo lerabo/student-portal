@@ -53,10 +53,14 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.middleware.csp.ContentSecurityPolicyMiddleware",
+    "config.middleware.read_only_middleware",
     "config.middleware.StorageErrorMiddleware",
 ]
 
 SLOW_REQUEST_MS = 500
+
+# Варіант 2: DJANGO_READ_ONLY=1 вмикає режим лише для читання
+PORTAL_READ_ONLY = os.environ.get("DJANGO_READ_ONLY", "0") == "1"
 
 SECURE_CSP = {
     "default-src": [CSP.SELF],
