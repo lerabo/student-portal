@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Студенти групи {{ group.name }}{% endblock %}
+
+{% block content %}
+<h1>Студенти групи {{ group.name }}</h1>
+
+<form method="get">
+  <input type="search" name="q" value="{{ query }}" placeholder="Прізвище">
+  <button type="submit">Знайти</button>
+</form>
+
+<table>
+  <tr><th>ID</th><th>Студент</th><th>Середній бал</th></tr>
+  {% for student in students %}
+    <tr>
+      <td>{{ student.id }}</td>
+      <td>{{ student.full_name }}</td>
+      <td>{{ student.average|floatformat:1|default:"-" }}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="3">Нікого не знайдено за запитом «{{ query }}»</td></tr>
+  {% endfor %}
+</table>
+<p>Усього: {{ students|length }}</p>
+{% endblock %}
