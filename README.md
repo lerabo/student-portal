@@ -65,16 +65,54 @@ DEKANAT_URL=http://127.0.0.1:8001/group.json uv run student-portal       # Linux
 $env:DEKANAT_URL="http://127.0.0.1:8001/group.json"; uv run student-portal  # PowerShell
 ~~~
 
+## Вебзастосунок Django
+
+Проєкт Django `config` і застосунок `students` використовують те саме ядро
+`student_portal`, що й консольний застосунок, і показують ті самі дані.
+
+Налаштування, які відрізняються між середовищами, беруться зі змінних середовища.
+Скопіюйте `.env.example` у `.env` і вставте в нього новий ключ (файл `.env` не
+комітять, він уже є в `.gitignore`):
+
+~~~bash
+cp .env.example .env
+uv run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+~~~
+
+| Змінна | Значення | За замовчуванням |
+| --- | --- | --- |
+| `DJANGO_SECRET_KEY` | секретний ключ; ключ із символами `#` або `$` беруть в одинарні лапки | немає - без неї Django не запуститься |
+| `DJANGO_DEBUG` | `1` вмикає режим налагодження | `0` (вимкнено) |
+| `DJANGO_ALLOWED_HOSTS` | дозволені хости через пробіл, у лапках | порожньо |
+
+Команди запускають з файлом змінних:
+
+~~~bash
+uv run --env-file .env python manage.py migrate        # таблиці вбудованих застосунків
+uv run --env-file .env python manage.py runserver      # http://127.0.0.1:8000/students/
+uv run --env-file .env python manage.py group_stats data/group.json
+uv run --env-file .env python manage.py debtors --course Python
+~~~
+
+Сторінка `/students/` показує рейтинг групи з `data/group.json`. Команда
+`group_stats` друкує кількість студентів і розподіл оцінок за шкалою ECTS,
+`debtors` - боржників з дисциплінами заборгованості (параметр `--course` обмежує
+однією дисципліною; шлях до файлу необов'язковий). Щоб не писати `--env-file`
+щоразу, виконайте `export UV_ENV_FILE=.env` (bash/zsh) або
+`$env:UV_ENV_FILE=".env"` (PowerShell).
+
 ## Тести
 
 Модульні тести pytest лежать у теці `tests/`, спільні фікстури - у `tests/conftest.py`.
 
 ~~~bash
-uv run pytest                 # усі тести, короткий звіт
-uv run pytest -v              # кожен тест окремим рядком
-uv run pytest -k journal      # лише тести, у назві яких є «journal»
+uv run --env-file .env pytest                 # усі тести, короткий звіт
+uv run --env-file .env pytest -v              # кожен тест окремим рядком
+uv run --env-file .env pytest -k journal      # лише тести, у назві яких є «journal»
 ~~~
 
+Налаштування Django читають ключ із середовища, тому без `--env-file .env`
+pytest-django завершиться з `KeyError: 'DJANGO_SECRET_KEY'` ще до збирання тестів.
 Тести працюють із файлами лише у тимчасовій теці (`tmp_path`) і не змінюють `data/`.
 Мережу (`urlopen`), затримки розсилки і `input()` підміняють дублери, тож тести
 не звертаються до сервера і нічого не чекають.
@@ -85,19 +123,21 @@ uv run pytest -k journal      # лише тести, у назві яких є �
 `pyproject.toml`), нижче нього `pytest --cov` завершується помилкою.
 
 ~~~bash
-uv run pytest --cov                          # звіт у терміналі з непокритими рядками
-uv run pytest --cov --cov-report=html        # HTML-звіт у htmlcov/index.html
+uv run --env-file .env pytest --cov                    # звіт у терміналі
+uv run --env-file .env pytest --cov --cov-report=html  # HTML-звіт у htmlcov/index.html
 ~~~
 
 На кожен pull request і push у `main` GitHub Actions (`.github/workflows/ci.yml`)
-запускає два завдання: `checks` (Ruff і mypy) і `tests` (pytest з покриттям,
+запускає два завдання: `checks` (Ruff, mypy, `manage.py check` і
+`makemigrations --check`) і `tests` (pytest з покриттям,
 HTML-звіт зберігається як артефакт `coverage-html`). Правило гілки `main`
 дозволяє злиття лише після зелених `checks` і `tests`.
 
 ## Перевірки
 
 ~~~bash
-uv run pytest
+uv run --env-file .env pytest
+uv run --env-file .env python manage.py check
 uv run ruff check .
 uv run ruff format --check .
 uv run mypy src
