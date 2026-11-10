@@ -84,17 +84,20 @@ uv run python -c "from django.core.management.utils import get_random_secret_key
 | `DJANGO_SECRET_KEY` | секретний ключ; ключ із символами `#` або `$` беруть в одинарні лапки | немає - без неї Django не запуститься |
 | `DJANGO_DEBUG` | `1` вмикає режим налагодження | `0` (вимкнено) |
 | `DJANGO_ALLOWED_HOSTS` | дозволені хости через пробіл, у лапках | порожньо |
+| `DJANGO_READ_ONLY` | `1` вмикає режим лише для читання: POST, PUT, PATCH і DELETE отримують 503 | `0` (вимкнено) |
 
 Команди запускають з файлом змінних:
 
 ~~~bash
-uv run --env-file .env python manage.py migrate        # таблиці вбудованих застосунків
+uv run --env-file .env python manage.py migrate        # таблиці бази даних
+uv run --env-file .env python manage.py load_group data/group.json
 uv run --env-file .env python manage.py runserver      # http://127.0.0.1:8000/students/
 uv run --env-file .env python manage.py group_stats data/group.json
 uv run --env-file .env python manage.py debtors --course Python
 ~~~
 
-Сторінки описано нижче, дані вони беруть з `data/group.json`. Команда
+Сторінки описано нижче, дані вони беруть з бази даних (див. «База даних і
+адмінпанель»). Команда `load_group` переносить групу з файлу JSON у базу,
 `group_stats` друкує кількість студентів і розподіл оцінок за шкалою ECTS,
 `debtors` - боржників з дисциплінами заборгованості (параметр `--course` обмежує
 однією дисципліною; шлях до файлу необов'язковий). Щоб не писати `--env-file`
@@ -110,6 +113,10 @@ uv run --env-file .env python manage.py debtors --course Python
 | `/students/<id>.json` | дані студента у JSON | `student_json` (FBV) |
 | `/students/ranking/` | рейтинг групи | `RankingView` (`TemplateView`) |
 | `/students/pages/` | рейтинг по два студенти на сторінці (`?page=`) | `StudentListView` (`ListView`) |
+| `/students/ects/<letter>/` | студенти із середнім балом на літеру ECTS (`A`…`E`, `Fx`) | `by_ects` (FBV, конвертер `ects`) |
+| `/students/st/0003/` | стара адреса картки, перенаправлення 301 на `/students/3/` | `legacy_student` (`re_path`) |
+| `/` | перенаправлення 302 на список студентів | `RedirectView` |
+| `/admin/` | адмінпанель: групи, студенти з оцінками | `django.contrib.admin` |
 
 Усі сторінки успадковують `templates/base.html`. Стилі лежать у
 `students/static/students/style.css`; рядки оцінок на картці мають колір за
@@ -119,6 +126,40 @@ uv run --env-file .env python manage.py debtors --course Python
 ~~~bash
 uv run --env-file .env python manage.py collectstatic --noinput
 ~~~
+
+Кожна відповідь має заголовок `Server-Timing` (час обробки, `TimingMiddleware`
+стоїть першим у `MIDDLEWARE`) і `Content-Security-Policy`. Якщо база даних порожня
+або недоступна, сторінки повертають 503 «Сервіс тимчасово недоступний», а причина
+потрапляє в журнал сервера.
+
+### База даних і адмінпанель
+
+Сторінки читають дані з SQLite (`db.sqlite3`, файл не комітять). Моделі `Group`,
+`Student` і `Grade` описано в `students/models.py`; модуль `students/services.py`
+перетворює записи бази на об'єкти ядра, тож рейтинг і шкала ECTS, як і раніше,
+обчислюються в `student_portal`. Перший запуск:
+
+~~~bash
+uv run --env-file .env python manage.py migrate
+uv run --env-file .env python manage.py load_group data/group.json
+uv run --env-file .env python manage.py createsuperuser
+~~~
+
+`load_group` можна запускати повторно: він оновлює тих самих студентів і замінює їхні
+оцінки, копій не з'являється. Адмінпанель відкривається на
+http://127.0.0.1:8000/admin/: список студентів має пошук і фільтр за групою, на
+сторінці студента внизу редагуються оцінки. Бали понад 100 відхиляє і форма, і сама
+база даних (обмеження `grade_score_at_most_100`).
+
+Після зміни моделей створіть і закомітьте міграцію, а потім застосуйте її:
+
+~~~bash
+uv run --env-file .env python manage.py makemigrations students
+uv run --env-file .env python manage.py migrate
+~~~
+
+Без міграції CI не пройде: крок `makemigrations --check --dry-run` завершиться з
+кодом 1.
 
 ## Тести
 
@@ -133,6 +174,8 @@ uv run --env-file .env pytest -k journal      # лише тести, у назв
 Налаштування Django читають ключ із середовища, тому без `--env-file .env`
 pytest-django завершиться з `KeyError: 'DJANGO_SECRET_KEY'` ще до збирання тестів.
 Тести працюють із файлами лише у тимчасовій теці (`tmp_path`) і не змінюють `data/`.
+Тести, яким потрібна база, використовують окрему тестову базу pytest-django
+(фікстури `db`, `db_group`, `admin_client`) і не залежать від `db.sqlite3`.
 Мережу (`urlopen`), затримки розсилки і `input()` підміняють дублери, тож тести
 не звертаються до сервера і нічого не чекають.
 
