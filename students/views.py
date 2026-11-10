@@ -1,9 +1,13 @@
+from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
 from django.http import JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.views.generic import ListView, TemplateView
 
 from student_portal.grades import ects_grade
 
+from . import models
+from .forms import GradeForm
 from .services import get_group, get_student_or_404
 
 
@@ -18,6 +22,26 @@ def student_list(request):
 def student_detail(request, student_id):
     student = get_student_or_404(get_group(), student_id)
     return render(request, "students/student_detail.html", {"student": student})
+
+
+@permission_required("students.add_grade", raise_exception=True)
+def add_grade(request, student_id):
+    """Нова оцінка студента: POST - перенаправлення - GET з повідомленням."""
+    student = get_object_or_404(models.Student, pk=student_id)
+    if request.method == "POST":
+        form = GradeForm(request.POST)
+        if form.is_valid():
+            grade = form.save(commit=False)
+            grade.student = student
+            grade.save()
+            messages.success(
+                request, f"Оцінку {grade.score} з {grade.course} збережено"
+            )
+            return redirect("students:detail", student_id=student.pk)
+    else:
+        form = GradeForm()
+    context = {"form": form, "student": student}
+    return render(request, "students/grade_form.html", context)
 
 
 def student_json(request, student_id):
