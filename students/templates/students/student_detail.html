@@ -20,6 +20,9 @@
 </table>
 {% with average=student.average %}
 <p>Середній бал: {{ average|floatformat:1|default:"-" }} {{ average|ects }}</p>
+{% if average is not None %}
+<p><a href="{% url 'students:by-ects' average|ects %}">Інші студенти з оцінкою {{ average|ects }}</a></p>
+{% endif %}
 {% endwith %}
 <p><a href="{% url 'students:detail-json' student.id %}">JSON</a></p>
 {% endblock %}
