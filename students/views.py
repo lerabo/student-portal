@@ -1,6 +1,8 @@
 from django.http import JsonResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.views.generic import ListView, TemplateView
+
+from student_portal.grades import ects_grade
 
 from .services import get_group, get_student_or_404
 
@@ -28,6 +30,23 @@ def student_json(request, student_id):
         },
         json_dumps_params={"ensure_ascii": False},
     )
+
+
+def by_ects(request, letter):
+    """Студенти, чий середній бал відповідає літері ECTS."""
+    group = get_group()
+    students = [
+        s
+        for s in group
+        if (average := s.average()) is not None and ects_grade(average) == letter
+    ]
+    context = {"group": group, "letter": letter, "students": students}
+    return render(request, "students/by_ects.html", context)
+
+
+def legacy_student(request, student_id):
+    """Стара адреса /students/st/0003/ назавжди переїхала на /students/3/."""
+    return redirect("students:detail", student_id=int(student_id), permanent=True)
 
 
 class RankingView(TemplateView):

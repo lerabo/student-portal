@@ -8,6 +8,7 @@ from student_portal.grades import Grade
 from student_portal.group import Group
 from student_portal.people import Student
 from student_portal.storage import save_group
+from students.services import store_group
 
 type StudentFactory = Callable[..., Student]
 
@@ -54,3 +55,10 @@ def data_file(tmp_path, settings, group):
     save_group(group, path)
     settings.STUDENT_PORTAL_DATA = path
     return path
+
+
+@pytest.fixture
+def db_group(db, group):
+    """Та сама група з трьох студентів, збережена в тестовій базі даних."""
+    store_group(group)
+    return group

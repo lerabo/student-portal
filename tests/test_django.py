@@ -14,7 +14,7 @@ from student_portal.storage import save_group
 from students.management.commands.group_stats import students_word
 
 
-def test_ranking_page_lists_best_student_first(client, data_file):
+def test_ranking_page_lists_best_student_first(client, db_group):
     response = client.get(reverse("students:ranking"))
 
     assertTemplateUsed(response, "students/ranking.html")
@@ -22,14 +22,14 @@ def test_ranking_page_lists_best_student_first(client, data_file):
     assertContains(response, "<li>Коваль Олена: 91,5</li>", html=True)
 
 
-def test_ranking_page_shows_student_without_grades_last(client, data_file):
+def test_ranking_page_shows_student_without_grades_last(client, db_group):
     response = client.get(reverse("students:ranking"))
 
     assert response.context["ranking"][-1].last_name == "Бойко"
     assertContains(response, "<li>Бойко Ірина: немає оцінок</li>", html=True)
 
 
-def test_unknown_url_returns_404(client, data_file):
+def test_unknown_url_returns_404(client):
     assert client.get("/no-such-page/").status_code == 404
 
 
