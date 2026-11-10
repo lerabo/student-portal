@@ -51,6 +51,10 @@ class Student(Person):
         """Чи має студент хоча б одну оцінку Fx (варіант 2)."""
         return any(g.ects == "Fx" for g in self.grades)
 
+    def failed_courses(self) -> list[str]:
+        """Дисципліни з оцінкою Fx за абеткою, кожна один раз (варіант 2)."""
+        return sorted({g.course for g in self.grades if g.ects == "Fx"})
+
 
 @dataclass
 class Teacher(Person):

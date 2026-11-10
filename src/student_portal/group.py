@@ -79,9 +79,14 @@ class Group:
         """Повертає контекстний менеджер, що скасовує зміни в разі помилки."""
         return Transaction(self)
 
-    def debtors(self) -> list[Student]:
-        """Студенти з хоча б однією оцінкою Fx (варіант 2)."""
-        return [s for s in self if s.is_debtor()]
+    def debtors(self, course: str | None = None) -> list[Student]:
+        """Студенти з хоча б однією оцінкою Fx (варіант 2).
+
+        Якщо задано course, лише ті, хто має Fx саме з цієї дисципліни.
+        """
+        if course is None:
+            return [s for s in self if s.is_debtor()]
+        return [s for s in self if course in s.failed_courses()]
 
 
 class Transaction:
