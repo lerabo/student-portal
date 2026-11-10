@@ -25,3 +25,9 @@ class GradeForm(forms.ModelForm):
         if graded_on is not None and graded_on > timezone.localdate():
             self.add_error("graded_on", "Дата оцінки не може бути в майбутньому")
         return cleaned_data
+
+
+class SearchForm(forms.Form):
+    """Варіант 2: пошук студентів за прізвищем, не довше 50 символів."""
+
+    q = forms.CharField(label="Прізвище", max_length=50, required=False)

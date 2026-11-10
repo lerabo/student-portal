@@ -9,15 +9,16 @@ from django.views.generic import CreateView, ListView, TemplateView, UpdateView
 from student_portal.grades import ects_grade
 
 from . import models
-from .forms import GradeForm
+from .forms import GradeForm, SearchForm
 from .services import get_group, get_student_or_404
 
 
 def student_list(request):
     group = get_group()
-    query = request.GET.get("q", "").strip()
+    form = SearchForm(request.GET)
+    query = form.cleaned_data["q"] if form.is_valid() else ""
     students = group.find(query) if query else list(group)
-    context = {"group": group, "students": students, "query": query}
+    context = {"group": group, "students": students, "query": query, "form": form}
     return render(request, "students/student_list.html", context)
 
 

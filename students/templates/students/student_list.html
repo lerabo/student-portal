@@ -14,10 +14,11 @@
 <h1>Студенти групи {{ group.name }}</h1>
 
 <form method="get">
-  <input type="search" name="q" value="{{ query }}" placeholder="Прізвище">
+  {{ form.q.label_tag }} {{ form.q }}
   <button type="submit">Знайти</button>
 </form>
 
+{{ form.q.errors }}
 <table>
   <tr><th>ID</th><th>Студент</th><th>Середній бал</th></tr>
   {% for student in students %}

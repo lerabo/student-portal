@@ -46,6 +46,23 @@ def test_search_without_results_shows_query(client, db_group):
     assertContains(response, "Усього: 0")
 
 
+def test_search_with_valid_query_filters_list(client, db_group):
+    response = client.get(reverse("students:list"), {"q": "Ков"})
+
+    assert response.context["form"].is_valid()
+    assert [s.last_name for s in response.context["students"]] == ["Коваль"]
+
+
+def test_too_long_query_shows_error_above_table(client, db_group):
+    response = client.get(reverse("students:list"), {"q": "К" * 51})
+
+    assert len(response.context["students"]) == 3
+    html = response.content.decode()
+    error = html.index('class="errorlist"')
+    assert error < html.index("<table>")
+    assert "не більше ніж 50 символів (зараз 51)" in html
+
+
 def test_detail_shows_grades_and_average(client, db_group):
     response = client.get(reverse("students:detail", args=[1]))
 
