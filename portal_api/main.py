@@ -110,6 +110,13 @@ async def ranking(
     ]
 
 
+@router.get("/stats/ects")
+async def ects_stats(session: SessionDep) -> dict[str, int]:
+    """Варіант 2: скільки оцінок кожної літери ECTS; порожня база - порожній словник."""
+    group = await load_group(session)
+    return group.ects_distribution()
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings()
 
