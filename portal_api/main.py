@@ -5,7 +5,15 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
+from fastapi import (
+    APIRouter,
+    Depends,
+    FastAPI,
+    HTTPException,
+    Query,
+    Request,
+    Security,
+)
 from fastapi.security import APIKeyHeader
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -28,7 +36,7 @@ async def get_session(request: Request) -> AsyncIterator[AsyncSession]:
 
 
 async def check_api_key(
-    request: Request, key: Annotated[str | None, Depends(api_key_header)]
+    request: Request, key: Annotated[str | None, Security(api_key_header)]
 ) -> None:
     expected = request.app.state.settings.api_key.get_secret_value()
     if key is None or not secrets.compare_digest(key, expected):
