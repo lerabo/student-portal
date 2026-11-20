@@ -4,21 +4,9 @@ from datetime import date
 from statistics import fmean
 from typing import Annotated
 
-from pydantic import (
-    AfterValidator,
-    BaseModel,
-    ConfigDict,
-    Field,
-    computed_field,
-)
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 from student_portal.grades import MAX_SCORE, MIN_SCORE, ects_grade
-
-
-def not_in_future(value: date) -> date:
-    if value > date.today():
-        raise ValueError("дата оцінки не може бути в майбутньому")
-    return value
 
 
 class GradeIn(BaseModel):
@@ -33,9 +21,16 @@ class GradeIn(BaseModel):
         },
     )
 
-    course: str = Field(min_length=1, max_length=100)
-    score: int = Field(ge=MIN_SCORE, le=MAX_SCORE)
-    graded_on: Annotated[date, AfterValidator(not_in_future)]
+    course: Annotated[str, Field(min_length=1, max_length=100)]
+    score: Annotated[int, Field(ge=MIN_SCORE, le=MAX_SCORE)]
+    graded_on: date
+
+    @field_validator("graded_on")
+    @classmethod
+    def not_in_future(cls, value: date) -> date:
+        if value > date.today():
+            raise ValueError("дата оцінки не може бути в майбутньому")
+        return value
 
 
 class GradeOut(BaseModel):

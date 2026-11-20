@@ -49,7 +49,7 @@ NOT_FOUND = {404: {"description": "Студента немає"}}
 router = APIRouter(dependencies=[Depends(check_api_key)])
 
 
-@router.get("/students")
+@router.get("/students", tags=["students"])
 async def list_students(
     session: SessionDep,
     limit: Annotated[int, Query(ge=1, le=100)] = 20,
@@ -79,13 +79,18 @@ async def find_student(session: AsyncSession, student_id: int) -> orm.Student:
     return student
 
 
-@router.get("/students/{student_id}", responses=NOT_FOUND)
+@router.get("/students/{student_id}", tags=["students"], responses=NOT_FOUND)
 async def get_student(student_id: int, session: SessionDep) -> StudentOut:
     """Картка студента з оцінками і середнім балом."""
     return StudentOut.model_validate(await find_student(session, student_id))
 
 
-@router.post("/students/{student_id}/grades", status_code=201, responses=NOT_FOUND)
+@router.post(
+    "/students/{student_id}/grades",
+    tags=["grades"],
+    status_code=201,
+    responses=NOT_FOUND,
+)
 async def add_grade(student_id: int, grade: GradeIn, session: SessionDep) -> GradeOut:
     """Нова оцінка студента, наприклад за тест у системі дистанційного навчання."""
     await find_student(session, student_id)
@@ -106,7 +111,7 @@ async def load_group(session: AsyncSession) -> Group:
     return group
 
 
-@router.get("/ranking")
+@router.get("/ranking", tags=["stats"])
 async def ranking(
     session: SessionDep, limit: Annotated[int, Query(ge=1, le=100)] = 10
 ) -> list[RankingItem]:
@@ -118,7 +123,7 @@ async def ranking(
     ]
 
 
-@router.get("/stats/ects")
+@router.get("/stats/ects", tags=["stats"])
 async def ects_stats(session: SessionDep) -> dict[str, int]:
     """Варіант 2: скільки оцінок кожної літери ECTS; порожня база - порожній словник."""
     group = await load_group(session)
