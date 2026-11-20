@@ -57,6 +57,8 @@ strict = true
 [tool.coverage.run]
 branch = true
 source = ["student_portal", "students", "portal_api"]
+# асинхронна SQLAlchemy продовжує обробники в greenlet, TestClient - в окремому потоці
+concurrency = ["thread", "greenlet"]
 
 [tool.coverage.report]
 show_missing = true
