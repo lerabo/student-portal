@@ -12,8 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.orm import selectinload
 
 from portal_api import orm
-from portal_api.schemas import StudentOut, StudentPage
+from portal_api.schemas import GradeIn, GradeOut, RankingItem, StudentOut, StudentPage
 from portal_api.settings import Settings
+from student_portal.group import Group
 
 api_key_header = APIKeyHeader(
     name="X-API-Key", description="Ключ з PORTAL_API_KEY", auto_error=False
@@ -74,6 +75,39 @@ async def find_student(session: AsyncSession, student_id: int) -> orm.Student:
 async def get_student(student_id: int, session: SessionDep) -> StudentOut:
     """Картка студента з оцінками і середнім балом."""
     return StudentOut.model_validate(await find_student(session, student_id))
+
+
+@router.post("/students/{student_id}/grades", status_code=201, responses=NOT_FOUND)
+async def add_grade(student_id: int, grade: GradeIn, session: SessionDep) -> GradeOut:
+    """Нова оцінка студента, наприклад за тест у системі дистанційного навчання."""
+    await find_student(session, student_id)
+    record = orm.Grade(student_id=student_id, **grade.model_dump())
+    session.add(record)
+    await session.commit()
+    return GradeOut.model_validate(record)
+
+
+async def load_group(session: AsyncSession) -> Group:
+    """Усі студенти бази даних як група ядра: правила лишаються в ядрі."""
+    students = await session.scalars(
+        select(orm.Student).options(selectinload(orm.Student.grades))
+    )
+    group = Group("усі студенти")
+    for student in students:
+        group.add(orm.to_core(student))
+    return group
+
+
+@router.get("/ranking")
+async def ranking(
+    session: SessionDep, limit: Annotated[int, Query(ge=1, le=100)] = 10
+) -> list[RankingItem]:
+    """Рейтинг за середнім балом, як на сайті; студенти без оцінок - у кінці."""
+    group = await load_group(session)
+    return [
+        RankingItem(place=place, id=s.id, full_name=s.full_name, average=s.average())
+        for place, s in enumerate(group.ranking()[:limit], start=1)
+    ]
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
