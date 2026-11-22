@@ -12,7 +12,7 @@
 - Python 3.13 або новіший, менеджер проєкту uv
 - Django, Django REST Framework
 - FastAPI, Pydantic, SQLAlchemy (async)
-- Vue.js
+- Vue.js 3, Vite, Vitest
 - PostgreSQL (продакшен), SQLite (розробка), Docker, Docker Compose
 
 ## Запуск
@@ -257,6 +257,44 @@ curl -s -X POST -H "X-API-Key: <ключ>" -H "Content-Type: application/json" \
   http://127.0.0.1:8001/students/1/grades
 ~~~
 
+## Клієнт Vue.js
+
+Односторінковий клієнт для викладачів і деканату на сторінці `/app/` (тека
+`frontend/`, Vue 3 і Vite). Він працює з REST API на DRF (`/api/`): список
+студентів з пошуком і сортуванням за середнім балом, картка з оцінками, нова
+оцінка (викладач), новий студент і видалення (деканат). Сторінка завантажується
+один раз, а список, картка і форми змінюються без перезавантаження.
+
+Клієнт працює з того самого джерела, що й сайт, тому CORS не потрібен:
+автентифікація - звичайна сесія сайту, а запити, що змінюють дані, несуть
+токен з cookie `csrftoken` у заголовку `X-CSRFToken`. Права перевіряє DRF;
+запит `GET /api/me/` повертає ім'я і права користувача, щоб клієнт не показував
+недоступних ролі кнопок. Ключ API FastAPI (ЛР 10) у браузері не використовується.
+
+Потрібен Node.js 22.18+ або 24.12+ (LTS). Команди - у теці `frontend/`:
+
+~~~bash
+npm ci              # залежності точно з package-lock.json
+npm run dev         # http://127.0.0.1:5173/, /api і /accounts - через проксі до Django на :8000
+npx vitest run      # тести компонентів
+npm run build       # збирання в frontend/dist для Django: /static/frontend/app.js і app.css
+~~~
+
+Під час розробки працюють два сервери: Django (`uv run --env-file .env python
+manage.py runserver`) і Vite (`npm run dev`); увійти можна за посиланням з
+клієнта. Після `npm run build` той самий клієнт роздає Django на
+<http://127.0.0.1:8000/app/> (посилання «Застосунок Vue» у меню).
+
+| Компонент | Що робить |
+| --- | --- |
+| `App.vue` | завантажує користувача і список, пошук, права ролі (`can()`), повідомлення, видалення |
+| `StudentTable.vue` | таблиця студентів: props `students`, `selectedId`, подія `select`, слот `actions`; сортування за середнім балом з `aria-sort` |
+| `StudentCard.vue` | картка студента з оцінками, подія `close`, слот для форми |
+| `GradeForm.vue` | нова оцінка: `POST /api/grades/`, помилки 400 біля полів, подія `created` |
+| `StudentForm.vue` | новий студент: `POST /api/students/`, помилки 400 біля полів, подія `created` |
+| `api.js` | `request()`: JSON, `X-CSRFToken`, `ApiError` для відповіді з помилкою |
+| `format.js` | середній бал з десятковою комою |
+
 ## Тести
 
 Модульні тести pytest лежать у теці `tests/`, спільні фікстури - у `tests/conftest.py`.
@@ -290,10 +328,11 @@ uv run --env-file .env pytest --cov --cov-report=html  # HTML-звіт у htmlco
 ~~~
 
 На кожен pull request і push у `main` GitHub Actions (`.github/workflows/ci.yml`)
-запускає два завдання: `checks` (Ruff, mypy, `manage.py check` і
-`makemigrations --check`) і `tests` (pytest з покриттям,
-HTML-звіт зберігається як артефакт `coverage-html`). Правило гілки `main`
-дозволяє злиття лише після зелених `checks` і `tests`.
+запускає три завдання: `checks` (Ruff, mypy, `manage.py check` і
+`makemigrations --check`), `tests` (pytest з покриттям,
+HTML-звіт зберігається як артефакт `coverage-html`) і `frontend` (`npm ci`,
+Vitest і збирання клієнта Vue). Правило гілки `main` дозволяє злиття лише після
+зелених `checks`, `tests` і `frontend`.
 
 ## Перевірки
 

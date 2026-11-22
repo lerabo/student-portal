@@ -149,6 +149,8 @@ USE_TZ = True
 
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+# Зібраний клієнт Vue (npm run build) - як /static/frontend/app.js і app.css
+STATICFILES_DIRS = [("frontend", BASE_DIR / "frontend" / "dist")]
 
 
 # Email

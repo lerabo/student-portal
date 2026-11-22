@@ -2,7 +2,9 @@
 
 from statistics import fmean
 
-from rest_framework import mixins, serializers, viewsets
+from rest_framework import mixins, permissions, serializers, viewsets
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
 
 from student_portal.grades import ects_grade
 
@@ -45,3 +47,18 @@ class GradeViewSet(
 ):
     serializer_class = GradeSerializer
     queryset = Grade.objects.order_by("id")
+
+
+@api_view(["GET"])
+@permission_classes([permissions.IsAuthenticated])
+def me(request):
+    """Поточний користувач і його права застосунку students (для клієнта Vue)."""
+    perms = request.user.get_all_permissions()
+    return Response(
+        {
+            "username": request.user.get_username(),
+            "permissions": sorted(
+                p.removeprefix("students.") for p in perms if p.startswith("students.")
+            ),
+        }
+    )
