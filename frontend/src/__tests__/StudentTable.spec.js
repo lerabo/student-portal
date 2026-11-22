@@ -5,6 +5,7 @@ import { BOIKO, KOVAL, MELNYK } from './fixtures.js'
 
 // <TransitionGroup> у тестах - заглушка, тому рядки шукаємо без tbody
 const rows = (wrapper) => wrapper.findAll('tr').slice(1)
+const names = (wrapper) => rows(wrapper).map((r) => r.find('td').text())
 
 describe('StudentTable', () => {
   it('рядок на студента із середнім балом або рискою', () => {
@@ -33,5 +34,31 @@ describe('StudentTable', () => {
     })
 
     expect(rows(wrapper).map((r) => r.findAll('td')[2].text())).toEqual(['id 1', 'id 2'])
+  })
+
+  // Варіант 2: сортування за середнім балом
+  it('сортування: спадання, потім зростання; без оцінок - наприкінці', async () => {
+    const wrapper = mount(StudentTable, { props: { students: [BOIKO, MELNYK, KOVAL] } })
+    const header = wrapper.findAll('th')[1]
+    const sort = header.find('button')
+
+    expect(header.attributes('aria-sort')).toBe('none')
+    expect(names(wrapper)).toEqual(['Бойко Ірина', 'Мельник Андрій', 'Коваль Олена'])
+
+    await sort.trigger('click')
+    expect(header.attributes('aria-sort')).toBe('descending')
+    expect(names(wrapper)).toEqual(['Коваль Олена', 'Мельник Андрій', 'Бойко Ірина'])
+
+    await sort.trigger('click')
+    expect(header.attributes('aria-sort')).toBe('ascending')
+    expect(names(wrapper)).toEqual(['Мельник Андрій', 'Коваль Олена', 'Бойко Ірина'])
+  })
+
+  it('сортування не змінює масив із props', async () => {
+    const students = [BOIKO, MELNYK, KOVAL]
+    const wrapper = mount(StudentTable, { props: { students } })
+
+    await wrapper.findAll('th')[1].find('button').trigger('click')
+    expect(students.map((s) => s.id)).toEqual([3, 2, 1])
   })
 })
