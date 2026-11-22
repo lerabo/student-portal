@@ -93,6 +93,7 @@ td {
 .link {
   color: #0b5cad;
   text-decoration: underline;
+  white-space: nowrap;
 }
 .sort {
   font-weight: bold;
