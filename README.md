@@ -11,7 +11,7 @@
 
 - Python 3.13 або новіший, менеджер проєкту uv
 - Django, Django REST Framework
-- FastAPI
+- FastAPI, Pydantic, SQLAlchemy (async)
 - Vue.js
 - PostgreSQL (продакшен), SQLite (розробка), Docker, Docker Compose
 
@@ -211,6 +211,52 @@ REST API побудовано на Django REST Framework. Доступ - лиш�
 curl -s -u teacher:<пароль> http://127.0.0.1:8000/api/students/
 ~~~
 
+## Асинхронний API (FastAPI)
+
+Окремий асинхронний API для інших систем університету: система дистанційного
+навчання передає оцінки за тести, деканат забирає рейтинг для стипендій. Людей тут
+немає, тому замість входу - спільний ключ у заголовку `X-API-Key`. API працює з
+тією самою базою даних, що й сайт Django, через асинхронну SQLAlchemy (`aiosqlite`),
+а правила (рейтинг, ECTS) бере з ядра `student_portal`.
+
+Схемою бази даних володіє Django: таблиці створюють і змінюють лише його міграції,
+а `portal_api/orm.py` тільки описує наявні таблиці `students_*` (відповідність
+перевіряє тест `test_orm_matches_django`). Тому спершу `manage.py migrate`, потім API.
+
+Налаштування читаються зі змінних середовища або з `.env` (pydantic-settings):
+
+| Змінна | За замовчуванням | Призначення |
+| --- | --- | --- |
+| `PORTAL_API_KEY` | - (обов'язкова, ≥ 16 символів) | ключ для заголовка `X-API-Key` |
+| `PORTAL_DATABASE_URL` | `sqlite+aiosqlite:///db.sqlite3` | база даних SQLAlchemy |
+| `PORTAL_ECHO_SQL` | `0` | `1` - друкувати SQL-запити в журнал |
+
+Ключ генерують один раз і кладуть лише в `.env` (у репозиторії його немає):
+
+~~~bash
+uv run python -c "import secrets; print(secrets.token_urlsafe(32))"
+uv run fastapi dev portal_api/main.py --port 8001
+~~~
+
+Документація OpenAPI відкрита без ключа: Swagger UI - <http://127.0.0.1:8001/docs>,
+ReDoc - <http://127.0.0.1:8001/redoc>, схема - <http://127.0.0.1:8001/openapi.json>.
+У Swagger UI ключ вводять кнопкою **Authorize**.
+
+| Метод | Адреса | Дія | Відповіді |
+| --- | --- | --- | --- |
+| GET | `/students?limit=20&offset=0` | студенти сторінками (`limit` 1-100) з оцінками і середнім | 200, 401, 422 |
+| GET | `/students/{id}` | картка студента | 200, 401, 404, 422 |
+| POST | `/students/{id}/grades` | нова оцінка (`course`, `score` 0-100, `graded_on` не в майбутньому) | 201, 401, 404, 422 |
+| GET | `/ranking?limit=10` | рейтинг за середнім балом, як на сайті | 200, 401, 422 |
+| GET | `/stats/ects` | розподіл оцінок за літерами ECTS, напр. `{"A": 2, "B": 1}` | 200, 401 |
+
+~~~bash
+curl -s -H "X-API-Key: <ключ>" http://127.0.0.1:8001/ranking?limit=3
+curl -s -X POST -H "X-API-Key: <ключ>" -H "Content-Type: application/json" \
+  -d '{"course": "Python", "score": 92, "graded_on": "2026-11-20"}' \
+  http://127.0.0.1:8001/students/1/grades
+~~~
+
 ## Тести
 
 Модульні тести pytest лежать у теці `tests/`, спільні фікстури - у `tests/conftest.py`.
@@ -226,6 +272,8 @@ pytest-django завершиться з `KeyError: 'DJANGO_SECRET_KEY'` ще д�
 Тести працюють із файлами лише у тимчасовій теці (`tmp_path`) і не змінюють `data/`.
 Тести, яким потрібна база, використовують окрему тестову базу pytest-django
 (фікстури `db`, `db_group`, `admin_client`) і не залежать від `db.sqlite3`.
+Тести FastAPI (`api`) отримують окрему базу SQLite в `tmp_path` і власний ключ, тож
+не залежать ні від `db.sqlite3`, ні від `.env`.
 Фікстура `client` входить від імені користувача без ролі, `anonymous` - клієнт без
 входу, `role_user` створює користувача в ролі «Викладачі» або «Деканат».
 Мережу (`urlopen`), затримки розсилки і `input()` підміняють дублери, тож тести

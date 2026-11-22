@@ -1,18 +1,30 @@
 """Спільні фікстури тестів."""
 
 import io
+import os
 from collections.abc import Callable
 
 import pytest
 from django.contrib.auth.models import Group as Role
 from django.core.management import call_command
 from django.test import Client
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 from student_portal.grades import Grade
 from student_portal.group import Group
 from student_portal.people import Student
 from student_portal.storage import save_group
 from students.services import store_group
+
+API_KEY = "test-key-0123456789"
+# portal_api.main створює застосунок під час імпорту: тести не залежать від .env
+os.environ.setdefault("PORTAL_API_KEY", API_KEY)
+
+from portal_api import orm  # noqa: E402
+from portal_api.main import create_app  # noqa: E402
+from portal_api.settings import Settings  # noqa: E402
 
 type StudentFactory = Callable[..., Student]
 
@@ -93,3 +105,55 @@ def role_user(db, django_user_model):
         return user
 
     return make
+
+
+def _api_database(path, group: Group | None) -> str:
+    """Окрема база SQLite для API: таблиці з моделей SQLAlchemy і, за потреби, група."""
+    engine = create_engine(f"sqlite:///{path}")
+    orm.Base.metadata.create_all(engine)
+    if group is not None:
+        with Session(engine) as session, session.begin():
+            record = orm.Group(name=group.name)
+            session.add(record)
+            session.flush()
+            for s in group:
+                session.add(
+                    orm.Student(
+                        id=s.id,
+                        group_id=record.id,
+                        first_name=s.first_name,
+                        last_name=s.last_name,
+                        grades=[
+                            orm.Grade(
+                                course=g.course, score=g.score, graded_on=g.graded_on
+                            )
+                            for g in s.grades
+                        ],
+                    )
+                )
+    engine.dispose()
+    return f"sqlite+aiosqlite:///{path}"
+
+
+def _client(database_url: str):
+    settings = Settings(database_url=database_url, api_key=API_KEY)
+    with TestClient(create_app(settings), headers={"X-API-Key": API_KEY}) as client:
+        yield client
+
+
+@pytest.fixture
+def api_db(tmp_path, group) -> str:
+    """URL окремої бази даних з тією самою групою з трьох студентів."""
+    return _api_database(tmp_path / "api.sqlite3", group)
+
+
+@pytest.fixture
+def api(api_db):
+    """Клієнт API з правильним ключем у заголовку X-API-Key."""
+    yield from _client(api_db)
+
+
+@pytest.fixture
+def empty_api(tmp_path):
+    """Клієнт API з порожньою базою даних."""
+    yield from _client(_api_database(tmp_path / "empty.sqlite3", None))
