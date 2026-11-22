@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Студенти (Vue){% endblock %}
+{% block content %}
+  <div id="app"></div>
+  <link rel="stylesheet" href="{% static 'frontend/app.css' %}">
+  <script type="module" src="{% static 'frontend/app.js' %}"></script>
+{% endblock %}
